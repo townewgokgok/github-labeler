@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"strings"
 
@@ -252,8 +253,11 @@ func (l Labeler) Sync(repo Repo) error {
 	return l.deleteLabels(slugs[0], slugs[1])
 }
 
-func newLabeler(configPath string, dryRun bool) (Labeler, error) {
-	token := os.Getenv("GITHUB_TOKEN")
+func newLabeler(opts Options) (Labeler, error) {
+	token := opts.Token
+	if token == "" {
+		token = os.Getenv("GITHUB_TOKEN")
+	}
 	if token == "" {
 		return Labeler{}, errors.New("GITHUB_TOKEN is missing")
 	}
@@ -263,15 +267,19 @@ func newLabeler(configPath string, dryRun bool) (Labeler, error) {
 	})
 	tc := oauth2.NewClient(oauth2.NoContext, ts)
 	client := github.NewClient(tc)
+	if opts.BaseURL != "" {
+		baseURL, _ := url.Parse(opts.BaseURL)
+		client.BaseURL = baseURL
+	}
 
-	m, err := loadManifest(configPath)
+	m, err := loadManifest(opts.ConfigPath)
 	if err != nil {
 		return Labeler{}, err
 	}
 
 	gc := &githubClient{
 		Client: client,
-		dryRun: dryRun,
+		dryRun: opts.DryRun,
 	}
 	gc.common.client = gc
 	gc.Label = (*LabelService)(&gc.common)
@@ -281,8 +289,15 @@ func newLabeler(configPath string, dryRun bool) (Labeler, error) {
 	}, nil
 }
 
-func Run(manifest string, dryRun bool) error {
-	labeler, err := newLabeler(manifest, dryRun)
+type Options struct {
+	BaseURL    string
+	Token      string
+	ConfigPath string
+	DryRun     bool
+}
+
+func Run(opts Options) error {
+	labeler, err := newLabeler(opts)
 	if err != nil {
 		return err
 	}

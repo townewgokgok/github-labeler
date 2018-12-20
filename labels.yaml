@@ -36,7 +36,7 @@ labels:
     color: "f9bb5e"
 
 repos:
-  - name: b4b4r07/github-labeler
+  - name: townewgokgok/github-labeler
     labels:
       - area/kubernetes
       - area/security
