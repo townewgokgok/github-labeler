@@ -48,8 +48,19 @@ func loadManifest(path string) (Manifest, error) {
 	if err != nil {
 		return m, err
 	}
-	err = yaml.Unmarshal(buf, &m)
-	return m, err
+	if err := yaml.Unmarshal(buf, &m); err != nil {
+		return m, err
+	}
+	allLabels := make([]string, len(m.Labels))
+	for i, label := range m.Labels {
+		allLabels[i] = label.Name
+	}
+	for i, repos := range m.Repos {
+		if len(repos.Labels) == 0 {
+			m.Repos[i].Labels = allLabels
+		}
+	}
+	return m, nil
 }
 
 func (m Manifest) getDefinedLabel(name string) (Label, error) {
