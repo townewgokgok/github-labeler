@@ -13,6 +13,7 @@ func main() {
 		baseURL  = flag.String("base-url", "", "base URL of Github API")
 		token    = flag.String("token", "", "Github access token")
 		manifest = flag.String("manifest", "labels.yaml", "YAML file to be described about labels and repos")
+		repo     = flag.String("repo", "", `repository name in format "owner/repo" to be used to instead of repos listed in manifest`)
 		dryRun   = flag.Bool("dry-run", false, "dry run flag")
 	)
 	flag.Parse()
@@ -20,6 +21,7 @@ func main() {
 	opts := labeler.Options{
 		BaseURL:    *baseURL,
 		Token:      *token,
+		Repo:       *repo,
 		ConfigPath: *manifest,
 		DryRun:     *dryRun,
 	}

@@ -42,7 +42,7 @@ type Repo struct {
 // Repos represents a collection of Repo
 type Repos []Repo
 
-func loadManifest(path string) (Manifest, error) {
+func loadManifest(path, forceRepo string) (Manifest, error) {
 	var m Manifest
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -51,6 +51,13 @@ func loadManifest(path string) (Manifest, error) {
 	if err := yaml.Unmarshal(buf, &m); err != nil {
 		return m, err
 	}
+
+	if forceRepo != "" {
+		m.Repos = []Repo{
+			{Name: forceRepo},
+		}
+	}
+
 	allLabels := make([]string, len(m.Labels))
 	for i, label := range m.Labels {
 		allLabels[i] = label.Name
@@ -283,7 +290,7 @@ func newLabeler(opts Options) (Labeler, error) {
 		client.BaseURL = baseURL
 	}
 
-	m, err := loadManifest(opts.ConfigPath)
+	m, err := loadManifest(opts.ConfigPath, opts.Repo)
 	if err != nil {
 		return Labeler{}, err
 	}
@@ -303,6 +310,7 @@ func newLabeler(opts Options) (Labeler, error) {
 type Options struct {
 	BaseURL    string
 	Token      string
+	Repo       string
 	ConfigPath string
 	DryRun     bool
 }
