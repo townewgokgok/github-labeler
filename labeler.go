@@ -1,21 +1,18 @@
-package main
+package labeler
 
 import (
 	"context"
 	"errors"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
-
+	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"golang.org/x/sync/errgroup"
-
-	"github.com/google/go-github/github"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Manifest represents the YAML file described about labels and repos
@@ -284,17 +281,10 @@ func newLabeler(configPath string, dryRun bool) (Labeler, error) {
 	}, nil
 }
 
-func main() {
-	var (
-		manifest = flag.String("manifest", "labels.yaml", "YAML file to be described about labels and repos")
-		dryRun   = flag.Bool("dry-run", false, "dry run flag")
-	)
-	flag.Parse()
-
-	labeler, err := newLabeler(*manifest, *dryRun)
+func Run(manifest string, dryRun bool) error {
+	labeler, err := newLabeler(manifest, dryRun)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err.Error())
-		os.Exit(1)
+		return err
 	}
 
 	eg := errgroup.Group{}
@@ -305,8 +295,5 @@ func main() {
 		})
 	}
 
-	if err := eg.Wait(); err != nil {
-		fmt.Fprintf(os.Stderr, "[ERROR] %v\n", err.Error())
-		os.Exit(1)
-	}
+	return eg.Wait()
 }

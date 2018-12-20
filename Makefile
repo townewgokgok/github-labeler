@@ -8,12 +8,12 @@ all: help
 
 .PHONY: build
 build:
-	go build
+	go build ./cmd/github-labeler
 
 .PHONY: pack
 pack:
 	mkdir -p $(DISTDIR)/$(APPDIR)
-	go build -o $(DISTDIR)/$(APPDIR)/$(APPNAME)
+	go build -o $(DISTDIR)/$(APPDIR)/$(APPNAME) ./cmd/github-labeler
 	tar cfvz $(DISTDIR)/$(APPDIR).tar.gz $(DISTDIR)/$(APPDIR)
 	rm -rf $(DISTDIR)/$(APPDIR)
 

@@ -6,7 +6,7 @@ CLI that sets GitHub labels exactly as written in YAML file
 ## Usage
 
 ```console
-$ go build
+$ go build ./cmd/github-labeler
 $ ./github-labeler
 ```
 
