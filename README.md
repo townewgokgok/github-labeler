@@ -3,12 +3,31 @@ github-labeler
 
 CLI that sets GitHub labels exactly as written in YAML file
 
+## Abilities added in this fork version
+
+- Can be used for Github Enterprise by `-base-url` option.
+- API token can also be specified by `-token` option.
+- Target repositories can also be specified by `-repo` option.
+- All labels defined in `labels` will be applied if `.repos[].labels` is omitted.
+
 ## Usage
 
 ```console
 $ go build ./cmd/github-labeler
 $ ./github-labeler
 ```
+
+1. Write `labels.yaml`.
+2. Do `read -s TOKEN` and input your API token of Github (or Github Enterprise).
+3. Use like this:
+   
+   ```bash
+   github-labeler -base-url 'https://github-enterprise.example.com/api/v3/' \
+     -token "$TOKEN" \
+     -manifest labels.yaml \
+     -repo foo/bar
+   ```
+   `-dry-run` option is also available.
 
 ## What this app does
 
@@ -36,7 +55,8 @@ repos:
 
 ## Author
 
-@b4b4r07
+- @b4b4r07 (the original author)
+- @townewgokgok (the author of this fork version)
 
 ## License
 
