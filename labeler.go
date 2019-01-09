@@ -19,15 +19,15 @@ import (
 // Manifest represents the YAML file described about labels and repos
 type Manifest struct {
 	Labels Labels `yaml:"labels"`
-	Repos  Repos  `yaml:"repos"`
+	Repos  Repos  `yaml:"repos,omitempty"`
 }
 
 // Label represents GitHub label
 type Label struct {
 	Name         string `yaml:"name"`
-	Description  string `yaml:"description"`
+	Description  string `yaml:"description,omitempty"`
 	Color        string `yaml:"color"`
-	PreviousName string `yaml:"previous_name"`
+	PreviousName string `yaml:"previous_name,omitempty"`
 }
 
 // Labels represents a collection of Label
@@ -44,12 +44,14 @@ type Repos []Repo
 
 func loadManifest(path, forceRepo string) (Manifest, error) {
 	var m Manifest
-	buf, err := ioutil.ReadFile(path)
-	if err != nil {
-		return m, err
-	}
-	if err := yaml.Unmarshal(buf, &m); err != nil {
-		return m, err
+	if path != "" {
+		buf, err := ioutil.ReadFile(path)
+		if err != nil {
+			return m, err
+		}
+		if err := yaml.Unmarshal(buf, &m); err != nil {
+			return m, err
+		}
 	}
 
 	if forceRepo != "" {
@@ -58,6 +60,11 @@ func loadManifest(path, forceRepo string) (Manifest, error) {
 		}
 	}
 
+	m.complete()
+	return m, nil
+}
+
+func (m Manifest) complete() {
 	allLabels := make([]string, len(m.Labels))
 	for i, label := range m.Labels {
 		allLabels[i] = label.Name
@@ -67,7 +74,6 @@ func loadManifest(path, forceRepo string) (Manifest, error) {
 			m.Repos[i].Labels = allLabels
 		}
 	}
-	return m, nil
 }
 
 func (m Manifest) getDefinedLabel(name string) (Label, error) {
@@ -301,16 +307,32 @@ func newLabeler(opts Options) (Labeler, error) {
 	}
 	gc.common.client = gc
 	gc.Label = (*LabelService)(&gc.common)
-	return Labeler{
+	labeler := Labeler{
 		github:   gc,
 		manifest: m,
-	}, nil
+	}
+
+	if opts.CopyRepo != "" {
+		slugs := strings.Split(opts.CopyRepo, "/")
+		if len(slugs) != 2 {
+			return labeler, fmt.Errorf("copy source repository name %q is invalid", opts.CopyRepo)
+		}
+		labels, err := labeler.github.Label.List(slugs[0], slugs[1])
+		if err != nil {
+			return labeler, err
+		}
+		labeler.manifest.Labels = labels
+		labeler.manifest.complete()
+	}
+
+	return labeler, nil
 }
 
 type Options struct {
 	BaseURL    string
 	Token      string
 	Repo       string
+	CopyRepo   string
 	ConfigPath string
 	DryRun     bool
 }
@@ -319,6 +341,14 @@ func Run(opts Options) error {
 	labeler, err := newLabeler(opts)
 	if err != nil {
 		return err
+	}
+	if len(labeler.manifest.Repos) == 0 {
+		if opts.CopyRepo == "" {
+			return fmt.Errorf("no repository to operate")
+		}
+		y, _ := yaml.Marshal(labeler.manifest)
+		fmt.Print(string(y))
+		return nil
 	}
 
 	eg := errgroup.Group{}

@@ -9,6 +9,12 @@ CLI that sets GitHub labels exactly as written in YAML file
 - API token can also be specified by `-token` option.
 - Target repositories can also be specified by `-repo` option.
 - All labels defined in `labels` will be applied if `.repos[].labels` is omitted.
+- Label definitions can also be retrieved from the source repository specified by the `-copy-repo` option like:
+  
+  ```bash
+  github-labeler -copy-repo foo/bar -repo foo/baz
+  ```
+  If the `-repo` is not specified, the retrieved definition is simply displayed.
 
 ## Usage
 
